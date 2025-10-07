@@ -7,9 +7,9 @@ on:
   # This allows you to run the workflow manually from the Actions tab
   workflow_dispatch:
 
-  permissions:
-    # This permission is required for the action to create a GitHub Release
-    contents: write
+permissions:
+  # This permission is required for the action to create a GitHub Release
+  contents: write
 
 jobs:
   build-and-package:
