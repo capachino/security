@@ -42,7 +42,7 @@ jobs:
       # This assumes 'npm run build' creates a 'dist' or 'build' folder.
       # If your build output is different, change the 'tar' command below.
       - name: Run build
-        run: npm run build
+        run: cd mcp-server && npm run build
 
       # 5. Create TAR archive with MCP server dependencies
       # Exclude root node_modules but INCLUDE mcp-server/node_modules
