@@ -30,6 +30,8 @@ jobs:
         with:
           node-version: '20' # Specify the Node.js version you use
           cache: 'npm'
+          # Tell the cache where to find the package-lock.json
+          cache-dependency-path: mcp-server/package-lock.json
 
       # 3. Install MCP server dependencies
       # The MCP server needs its dependencies bundled in the release
