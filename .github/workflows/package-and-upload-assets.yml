@@ -39,8 +39,6 @@ jobs:
         run: cd mcp-server && npm ci
 
       # 4. Runs your build script
-      # This assumes 'npm run build' creates a 'dist' or 'build' folder.
-      # If your build output is different, change the 'tar' command below.
       - name: Run build
         run: cd mcp-server && npm run build
 
