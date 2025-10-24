@@ -4,7 +4,6 @@ name: Package and Upload Release Assets
 env:
   PACKAGE_NAME: "security"
   FILES_TO_PACKAGE: "gemini-extension.json BIGQUERY.md LICENSE tools.yaml"
-  GCS_BUCKET_URL: "https://storage.googleapis.com/genai-toolbox/geminicli"
 
 on:
   release:
@@ -64,9 +63,6 @@ jobs:
       matrix:
         platform:
           - { os: "linux", arch: "x64", download_path_segment: "linux_amd64", binary_suffix: "", archive_extension: "tar.gz", archive_command: 'tar -czvf "${ARCHIVE_NAME}" -C staging .' }
-          - { os: "darwin", arch: "arm64", download_path_segment: "darwin_arm64", binary_suffix: "", archive_extension: "tar.gz", archive_command: 'tar -czvf "${ARCHIVE_NAME}" -C staging .' } 
-          - { os: "darwin", arch: "x64", download_path_segment: "darwin_amd64", binary_suffix: "", archive_extension: "tar.gz", archive_command: 'tar -czvf "${ARCHIVE_NAME}" -C staging .' }
-          - { os: "win32", arch: "x64", download_path_segment: "windows_amd64", binary_suffix: ".exe", archive_extension: "zip", archive_command: '(cd staging && zip ../"${ARCHIVE_NAME}" *)' }
   
     steps:
       - name: Download build artifacts
@@ -79,7 +75,7 @@ jobs:
         id: vars
         run: |
           echo "archive_name=${{ matrix.platform.os }}.${{ matrix.platform.arch }}.${{ env.PACKAGE_NAME }}.${{ matrix.platform.archive_extension }}" >> $GITHUB_OUTPUT
-          echo "source_binary=osv_scanner_${{ matrix.platform.os }}_${{ matrix.platform.download_path_segment }}" >> $GITHUB_OUTPUT
+          echo "source_binary=osv_scanner_${{ matrix.platform.download_path_segment }}" >> $GITHUB_OUTPUT
       
       - name: Download Source Binary
         env:
