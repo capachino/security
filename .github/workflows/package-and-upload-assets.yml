@@ -16,7 +16,7 @@ on:
       tag_name:
         description: 'The tag of the release to upload assets to'
         required: true
-        type: string
+        type: string    
 
 permissions:
   # This permission is required for the action to create a GitHub Release
