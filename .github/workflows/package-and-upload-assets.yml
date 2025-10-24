@@ -75,7 +75,7 @@ jobs:
         id: vars
         run: |
           echo "archive_name=${{ matrix.platform.os }}.${{ matrix.platform.arch }}.${{ env.PACKAGE_NAME }}.${{ matrix.platform.archive_extension }}" >> $GITHUB_OUTPUT
-          echo "source_binary=osv_scanner_${{ matrix.platform.download_path_segment }}" >> $GITHUB_OUTPUT
+          echo "source_binary=osv-scanner_${{ matrix.platform.download_path_segment }}" >> $GITHUB_OUTPUT
       
       - name: Download Source Binary
         env:
