@@ -14,7 +14,7 @@ on:
       tag_name:
         description: 'The tag of the release to upload assets to'
         required: true
-        type: string    
+        type: string
 
 jobs:
   build:
@@ -52,14 +52,13 @@ jobs:
           path: .
 
   package:
-    # This job depends on the 'build' job finishing successfully
     needs: build
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
         platform:
-          - { archive_name: "linux.x64.security.tar.gz", archive_command: 'tar -czvf "${ARCHIVE_NAME}" -C staging .', download_binary: "osv-scanner_linux_amd64" }
+          - { archive_name: "linux.x64.security.tar.gz", archive_command: 'tar -czvf "${ARCHIVE_NAME}" -C staging .', source_binary: "osv-scanner_linux_amd64" }
   
     steps:
       - name: Download build artifacts
@@ -70,7 +69,7 @@ jobs:
 
       - name: Download source binary
         env:
-          SOURCE_BINARY: ${{ matrix.platform.download_binary }}
+          SOURCE_BINARY: ${{ matrix.platform.source_binary }}
         run: |
           DOWNLOAD_URL="https://github.com/google/osv-scanner/releases/latest/download/${SOURCE_BINARY}"
           
@@ -86,7 +85,7 @@ jobs:
         env:
           ARCHIVE_COMMAND: ${{ matrix.platform.archive_command }}
           ARCHIVE_NAME: ${{ matrix.platform.archive_name }}
-          SOURCE_BINARY: ${{ matrix.platform.download_binary }}
+          SOURCE_BINARY: ${{ matrix.platform.source_binary }}
         run: |
           echo "Packaging ${SOURCE_BINARY} and extension contents into ${ARCHIVE_NAME}"
 
@@ -129,6 +128,9 @@ jobs:
           echo "--- Downloaded files ---"
           ls -R release-archives
           echo "------------------------"
+
+      - name: Remove build-output artifact
+        run: rm -rf release-archives/build-output
 
       - name: Upload all assets to GitHub Release
         env:
