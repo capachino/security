@@ -62,7 +62,7 @@ jobs:
     strategy:
       matrix:
         platform:
-          - { os: "linux", arch: "x64", download_path_segment: "linux_amd64", binary_suffix: "", archive_extension: "tar.gz", archive_command: 'tar -czvf "${ARCHIVE_NAME}" -C staging .' }
+          - { archive_name: "linux.x64.security.tar.gz", archive_command: 'tar -czvf "${ARCHIVE_NAME}" -C staging .', download_binary: "osv-scanner_linux_amd64" }
   
     steps:
       - name: Download build artifacts
@@ -71,15 +71,9 @@ jobs:
           name: build-output
           path: .
 
-      - name: Set Dynamic Environment Variables
-        id: vars
-        run: |
-          echo "archive_name=${{ matrix.platform.os }}.${{ matrix.platform.arch }}.${{ env.PACKAGE_NAME }}.${{ matrix.platform.archive_extension }}" >> $GITHUB_OUTPUT
-          echo "source_binary=osv-scanner_${{ matrix.platform.download_path_segment }}" >> $GITHUB_OUTPUT
-      
       - name: Download Source Binary
         env:
-          SOURCE_BINARY: ${{ steps.vars.outputs.source_binary }}
+          SOURCE_BINARY: ${{ matrix.platform.download_binary }}
         run: |
           DOWNLOAD_URL="https://github.com/google/osv-scanner/releases/latest/download/${SOURCE_BINARY}"
           
@@ -94,8 +88,8 @@ jobs:
         id: create_archive
         env:
           ARCHIVE_COMMAND: ${{ matrix.platform.archive_command }}
-          ARCHIVE_NAME: ${{ steps.vars.outputs.archive_name }}
-          SOURCE_BINARY: ${{ steps.vars.outputs.source_binary }}
+          ARCHIVE_NAME: ${{ matrix.platform.archive_name }}
+          SOURCE_BINARY: ${{ matrix.platform.download_binary }}
         run: |
           echo "Packaging ${SOURCE_BINARY} into ${ARCHIVE_NAME}"
 
