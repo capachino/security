@@ -89,3 +89,23 @@ jobs:
           
           echo "Binary downloaded and prepared."
           ls -l
+
+      - name: Create release archive
+        id: create_archive
+        env:
+          ARCHIVE_COMMAND: ${{ matrix.platform.archive_command }}
+          ARCHIVE_NAME: ${{ steps.vars.outputs.archive_name }}
+          SOURCE_BINARY: ${{ steps.vars.outputs.source_binary }}
+        run: |
+          echo "Packaging ${SOURCE_BINARY} into ${ARCHIVE_NAME}"
+
+          mkdir staging
+          cp "${SOURCE_BINARY}" "staging/${SOURCE_BINARY}"
+
+          echo "All assets staged."
+          ls -l staging
+
+          # Create archive
+          eval "${ARCHIVE_COMMAND}"
+          echo "Created archive: ${ARCHIVE_NAME}"
+          echo "ARCHIVE_PATH=${ARCHIVE_NAME}" >> $GITHUB_OUTPUT          
