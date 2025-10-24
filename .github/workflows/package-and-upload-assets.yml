@@ -81,7 +81,7 @@ jobs:
         env:
           SOURCE_BINARY: ${{ steps.vars.outputs.source_binary }}
         run: |
-          DOWNLOAD_URL="https://github.com/google/osv-scanner/releases/download/latest/${SOURCE_BINARY}"
+          DOWNLOAD_URL="https://github.com/google/osv-scanner/releases/latest/download/${SOURCE_BINARY}"
           
           echo "Downloading binary from: ${DOWNLOAD_URL}"
           curl -L --fail -o "${SOURCE_BINARY}" "${DOWNLOAD_URL}"
