@@ -1,5 +1,11 @@
 name: Package and Upload Release Assets
 
+# Global variables
+env:
+  PACKAGE_NAME: "security"
+  FILES_TO_PACKAGE: "gemini-extension.json BIGQUERY.md LICENSE tools.yaml"
+  GCS_BUCKET_URL: "https://storage.googleapis.com/genai-toolbox/geminicli"
+
 on:
   release:
     types: [created]
@@ -17,7 +23,7 @@ permissions:
   contents: write
 
 jobs:
-  build-and-package:
+  build:
     runs-on: ubuntu-latest
     steps:
       # 1. Checks out your repository's code
@@ -42,16 +48,9 @@ jobs:
       - name: Run build
         run: cd mcp-server && npm run build
 
-      # 5. Create TAR archive with MCP server dependencies
-      # Exclude root node_modules but INCLUDE mcp-server/node_modules
-      - name: Create TAR archive
-        run: tar -cvzf ../security-release.tar.gz --exclude='.git' --exclude='.github' --exclude='./assets' . && mv ../security-release.tar.gz .
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: .
 
-      # 6. Upload the TAR archive as a release asset
-      - name: Upload archive to GitHub Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release upload \
-            ${{ github.event.release.tag_name || inputs.tag_name }} \
-            security-release.tar.gz
