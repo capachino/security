@@ -2,7 +2,6 @@ name: Package and Upload Release Assets
 
 # Global variables
 env:
-  PACKAGE_NAME: "security"
   FILES_TO_PACKAGE: "gemini-extension.json GEMINI.md LICENSE mcp-server/ commands/"
 
 on:
@@ -16,10 +15,6 @@ on:
         description: 'The tag of the release to upload assets to'
         required: true
         type: string    
-
-permissions:
-  # This permission is required for the action to create a GitHub Release
-  contents: write
 
 jobs:
   build:
@@ -41,11 +36,13 @@ jobs:
       # 3. Install MCP server dependencies
       # The MCP server needs its dependencies bundled in the release
       - name: Install MCP server dependencies
-        run: cd mcp-server && npm ci
+        working-directory: ./mcp-server
+        run: npm ci
 
       # 4. Runs your build script
       - name: Run build
-        run: cd mcp-server && npm run build
+        working-directory: ./mcp-server
+        run: npm run build
 
       # 5. Upload build artifacts
       - name: Upload build artifacts
@@ -71,7 +68,7 @@ jobs:
           name: build-output
           path: .
 
-      - name: Download Source Binary
+      - name: Download source binary
         env:
           SOURCE_BINARY: ${{ matrix.platform.download_binary }}
         run: |
@@ -91,7 +88,7 @@ jobs:
           ARCHIVE_NAME: ${{ matrix.platform.archive_name }}
           SOURCE_BINARY: ${{ matrix.platform.download_binary }}
         run: |
-          echo "Packaging ${SOURCE_BINARY} into ${ARCHIVE_NAME}"
+          echo "Packaging ${SOURCE_BINARY} and extension contents into ${ARCHIVE_NAME}"
 
           mkdir staging
           cp "${SOURCE_BINARY}" "staging/osv-scanner"
@@ -104,3 +101,9 @@ jobs:
           eval "${ARCHIVE_COMMAND}"
           echo "Created archive: ${ARCHIVE_NAME}"
           echo "ARCHIVE_PATH=${ARCHIVE_NAME}" >> $GITHUB_OUTPUT
+
+      - name: Upload archive as workflow artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ${{ matrix.platform.archive_name }}
+          path: ${{ steps.create_archive.outputs.ARCHIVE_PATH }}
