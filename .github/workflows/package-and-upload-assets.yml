@@ -48,9 +48,49 @@ jobs:
       - name: Run build
         run: cd mcp-server && npm run build
 
+      # 5. Upload build artifacts
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build-output
           path: .
 
+  package-and-upload:
+    # This job depends on the 'build' job finishing successfully
+    needs: build
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        platform:
+          - { os: "linux", arch: "x64", download_path_segment: "linux_amd64", binary_suffix: "", archive_extension: "tar.gz", archive_command: 'tar -czvf "${ARCHIVE_NAME}" -C staging .' }
+          - { os: "darwin", arch: "arm64", download_path_segment: "darwin_arm64", binary_suffix: "", archive_extension: "tar.gz", archive_command: 'tar -czvf "${ARCHIVE_NAME}" -C staging .' } 
+          - { os: "darwin", arch: "x64", download_path_segment: "darwin_amd64", binary_suffix: "", archive_extension: "tar.gz", archive_command: 'tar -czvf "${ARCHIVE_NAME}" -C staging .' }
+          - { os: "win32", arch: "x64", download_path_segment: "windows_amd64", binary_suffix: ".exe", archive_extension: "zip", archive_command: '(cd staging && zip ../"${ARCHIVE_NAME}" *)' }
+  
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-output
+          path: .
+
+      - name: Set Dynamic Environment Variables
+        id: vars
+        run: |
+          echo "archive_name=${{ matrix.platform.os }}.${{ matrix.platform.arch }}.${{ env.PACKAGE_NAME }}.${{ matrix.platform.archive_extension }}" >> $GITHUB_OUTPUT
+          echo "source_binary=osv_scanner_${{ matrix.platform.os }}_${{ matrix.platform.arch }}${{ matrix.platform.binary_suffix }}" >> $GITHUB_OUTPUT
+      
+      - name: Download Source Binary
+        env:
+          SOURCE_BINARY: ${{ steps.vars.outputs.source_binary }}
+        run: |
+          DOWNLOAD_URL="https://github.com/google/osv-scanner/releases/download/latest/${SOURCE_BINARY}"
+          
+          echo "Downloading binary from: ${DOWNLOAD_URL}"
+          curl -L --fail -o "${SOURCE_BINARY}" "${DOWNLOAD_URL}"
+          chmod +x ${SOURCE_BINARY}
+          
+          echo "Binary downloaded and prepared."
+          ls -l
+          
