@@ -59,7 +59,7 @@ jobs:
       matrix:
         platform:
           - { os: "linux", archive_name: "linux.x64.security.tar.gz", archive_command: 'tar -czvf "${ARCHIVE_NAME}" -C staging .', source_binary: "osv-scanner_linux_amd64" }
-          - { os: "win32", archive_name: "win32.x64.security.zip", archive_command: '(cd staging && zip ../"${ARCHIVE_NAME}" *)', source_binary: "osv-scanner_windows_amd64.exe" }
+          - { os: "win32", archive_name: "win32.x64.security.zip", archive_command: '(cd staging && zip -r ../"${ARCHIVE_NAME}" *)', source_binary: "osv-scanner_windows_amd64.exe" }
   
     steps:
       - name: Download build artifacts
