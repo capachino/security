@@ -2,7 +2,7 @@ name: Package and Upload Release Assets
 
 # Global variables
 env:
-  FILES_TO_PACKAGE: "gemini-extension.json GEMINI.md LICENSE mcp-server/ commands/"
+  FILES_TO_PACKAGE: "gemini-extension.json GEMINI.md LICENSE commands/ mcp-server/"
 
 on:
   release:
@@ -58,7 +58,8 @@ jobs:
     strategy:
       matrix:
         platform:
-          - { archive_name: "linux.x64.security.tar.gz", archive_command: 'tar -czvf "${ARCHIVE_NAME}" -C staging .', source_binary: "osv-scanner_linux_amd64" }
+          - { os: "linux", archive_name: "linux.x64.security.tar.gz", archive_command: 'tar -czvf "${ARCHIVE_NAME}" -C staging .', source_binary: "osv-scanner_linux_amd64" }
+          - { os: "win32", archive_name: "win32.x64.security.zip", archive_command: '(cd staging && zip ../"${ARCHIVE_NAME}" *)', source_binary: "osv-scanner_windows_amd64.exe" }
   
     steps:
       - name: Download build artifacts
@@ -67,13 +68,13 @@ jobs:
           name: build-output
           path: .
 
-      - name: Get latest OSV-Scanner version
+      - name: Get latest OSV scanner version
         id: osv_scanner_version
         run: |
           LATEST_TAG=$(curl -s "https://api.github.com/repos/google/osv-scanner/releases/latest" | jq -r .tag_name)
           echo "tag=${LATEST_TAG}" >> $GITHUB_OUTPUT
       
-      - name: Download OSV binary
+      - name: Download OSV scanner binary
         env:
           SOURCE_BINARY: ${{ matrix.platform.source_binary }}
           OSV_SCANNER_VERSION: ${{ steps.osv_scanner_version.outputs.tag }}
@@ -90,19 +91,17 @@ jobs:
       - name: Install slsa-verifier
         uses: slsa-framework/slsa-verifier/actions/installer@v2.7.1
 
-      - name: Verify OSV binary
+      - name: Verify OSV scanner binary
         env:
           SOURCE_BINARY: ${{ matrix.platform.source_binary }}
           OSV_SCANNER_VERSION: ${{ steps.osv_scanner_version.outputs.tag }}
         run: |
-          # Download SLSA verifier
-          # SLSA_VERIFIER_VERSION="v2.4.1"
-          # curl -L --fail -o slsa-verifier "https://github.com/slsa-framework/slsa-verifier/releases/download/${SLSA_VERIFIER_VERSION}/slsa-verifier-linux-amd64"
-          # chmod +x slsa-verifier
-          # Download provenance file
           PROVENANCE_URL="https://github.com/google/osv-scanner/releases/download/${OSV_SCANNER_VERSION}/multiple.intoto.jsonl"
+
+          echo "Downloading provenance from: ${PROVENANCE_URL}"
           curl -L --fail -o multiple.intoto.jsonl "${PROVENANCE_URL}"
-          # Verify binary
+
+          echo "Verifying binary with slsa-verifier"
           slsa-verifier verify-artifact \
             "${SOURCE_BINARY}" \
             --provenance-path multiple.intoto.jsonl \
@@ -115,11 +114,18 @@ jobs:
           ARCHIVE_COMMAND: ${{ matrix.platform.archive_command }}
           ARCHIVE_NAME: ${{ matrix.platform.archive_name }}
           SOURCE_BINARY: ${{ matrix.platform.source_binary }}
+          OS_PLATFORM: ${{ matrix.platform.os }}
         run: |
           echo "Packaging ${SOURCE_BINARY} and extension contents into ${ARCHIVE_NAME}"
 
+          if [[ "${OS_PLATFORM}" == "win32" ]]; then
+            OUTPUT_BINARY="osv-scanner.exe"
+          else
+            OUTPUT_BINARY="osv-scanner"
+          fi
+
           mkdir staging
-          cp "${SOURCE_BINARY}" "staging/osv-scanner"
+          cp "${SOURCE_BINARY}" "staging/${OUTPUT_BINARY}"
           cp -r ${FILES_TO_PACKAGE} staging/
 
           echo "All assets staged."
@@ -128,13 +134,13 @@ jobs:
           # Create archive
           eval "${ARCHIVE_COMMAND}"
           echo "Created archive: ${ARCHIVE_NAME}"
-          echo "ARCHIVE_PATH=${ARCHIVE_NAME}" >> $GITHUB_OUTPUT
+          echo "archive_path=${ARCHIVE_NAME}" >> $GITHUB_OUTPUT
 
       - name: Upload archive as workflow artifact
         uses: actions/upload-artifact@v4
         with:
           name: release-asset-${{ matrix.platform.archive_name }}
-          path: ${{ steps.create_archive.outputs.ARCHIVE_PATH }}
+          path: ${{ steps.create_archive.outputs.archive_path }}
 
   # This job gathers all archives and uploads them to the GitHub Release.
   upload:
