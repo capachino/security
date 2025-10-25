@@ -103,7 +103,7 @@ jobs:
           PROVENANCE_URL="https://github.com/google/osv-scanner/releases/download/${OSV_SCANNER_VERSION}/multiple.intoto.jsonl"
           curl -L --fail -o multiple.intoto.jsonl "${PROVENANCE_URL}"
           # Verify binary
-          ./slsa-verifier verify-artifact \
+          slsa-verifier verify-artifact \
             "${SOURCE_BINARY}" \
             --provenance-path multiple.intoto.jsonl \
             --source-uri "github.com/google/osv-scanner" \
