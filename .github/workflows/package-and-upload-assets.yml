@@ -73,7 +73,7 @@ jobs:
           LATEST_TAG=$(curl -s "https://api.github.com/repos/google/osv-scanner/releases/latest" | jq -r .tag_name)
           echo "tag=${LATEST_TAG}" >> $GITHUB_OUTPUT
       
-      - name: Download source binary
+      - name: Download OSV binary
         env:
           SOURCE_BINARY: ${{ matrix.platform.source_binary }}
           OSV_SCANNER_VERSION: ${{ steps.osv_scanner_version.outputs.tag }}
@@ -88,9 +88,9 @@ jobs:
           ls -l
 
       - name: Install slsa-verifier
-        uses: slsa-framework/slsa-verifier/actions/installer@v2.4.1
+        uses: slsa-framework/slsa-verifier/actions/installer@v2.7.1
 
-      - name: SLSA verify OSV binary
+      - name: Verify OSV binary
         env:
           SOURCE_BINARY: ${{ matrix.platform.source_binary }}
           OSV_SCANNER_VERSION: ${{ steps.osv_scanner_version.outputs.tag }}
