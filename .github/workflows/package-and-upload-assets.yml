@@ -67,11 +67,18 @@ jobs:
           name: build-output
           path: .
 
+      - name: Get latest OSV-Scanner version
+        id: get_osv_scanner_version
+        run: |
+          LATEST_TAG=$(curl -s "https://api.github.com/repos/google/osv-scanner/releases/latest" | jq -r .tag_name)
+          echo "tag=${LATEST_TAG}" >> $GITHUB_OUTPUT
+      
       - name: Download source binary
         env:
           SOURCE_BINARY: ${{ matrix.platform.source_binary }}
+          OSV_SCANNER_VERSION: ${{ steps.get_osv_scanner_version.outputs.tag }}
         run: |
-          DOWNLOAD_URL="https://github.com/google/osv-scanner/releases/latest/download/${SOURCE_BINARY}"
+          DOWNLOAD_URL="https://github.com/google/osv-scanner/releases/download/${OSV_SCANNER_VERSION}/${SOURCE_BINARY}"
           
           echo "Downloading binary from: ${DOWNLOAD_URL}"
           curl -L --fail -o "${SOURCE_BINARY}" "${DOWNLOAD_URL}"
