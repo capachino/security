@@ -68,7 +68,7 @@ jobs:
           path: .
 
       - name: Get latest OSV-Scanner version
-        id: get_osv_scanner_version
+        id: osv_scanner_version
         run: |
           LATEST_TAG=$(curl -s "https://api.github.com/repos/google/osv-scanner/releases/latest" | jq -r .tag_name)
           echo "tag=${LATEST_TAG}" >> $GITHUB_OUTPUT
@@ -76,7 +76,7 @@ jobs:
       - name: Download source binary
         env:
           SOURCE_BINARY: ${{ matrix.platform.source_binary }}
-          OSV_SCANNER_VERSION: ${{ steps.get_osv_scanner_version.outputs.tag }}
+          OSV_SCANNER_VERSION: ${{ steps.osv_scanner_version.outputs.tag }}
         run: |
           DOWNLOAD_URL="https://github.com/google/osv-scanner/releases/download/${OSV_SCANNER_VERSION}/${SOURCE_BINARY}"
           
@@ -86,6 +86,28 @@ jobs:
           
           echo "Binary downloaded and prepared."
           ls -l
+
+      - name: Install slsa-verifier
+        uses: slsa-framework/slsa-verifier/actions/installer@v2.4.1
+
+      - name: SLSA verify OSV binary
+        env:
+          SOURCE_BINARY: ${{ matrix.platform.source_binary }}
+          OSV_SCANNER_VERSION: ${{ steps.osv_scanner_version.outputs.tag }}
+        run: |
+          # Download SLSA verifier
+          # SLSA_VERIFIER_VERSION="v2.4.1"
+          # curl -L --fail -o slsa-verifier "https://github.com/slsa-framework/slsa-verifier/releases/download/${SLSA_VERIFIER_VERSION}/slsa-verifier-linux-amd64"
+          # chmod +x slsa-verifier
+          # Download provenance file
+          PROVENANCE_URL="https://github.com/google/osv-scanner/releases/download/${OSV_SCANNER_VERSION}/multiple.intoto.jsonl"
+          curl -L --fail -o multiple.intoto.jsonl "${PROVENANCE_URL}"
+          # Verify binary
+          ./slsa-verifier verify-artifact \
+            "${SOURCE_BINARY}" \
+            --provenance-path multiple.intoto.jsonl \
+            --source-uri "github.com/google/osv-scanner" \
+            --source-tag "${OSV_SCANNER_VERSION}"
 
       - name: Create release archive
         id: create_archive
