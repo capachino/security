@@ -58,11 +58,11 @@ jobs:
     strategy:
       matrix:
         platform:
-          - { os: "linux", archive_name: "linux.x64.security.tar.gz", archive_command: 'tar -czvf "${ARCHIVE_NAME}" -C staging .', source_binary: "osv-scanner_linux_amd64" }
-          - { os: "darwin", archive_name: "darwin.x64.security.tar.gz", archive_command: 'tar -czvf "${ARCHIVE_NAME}" -C staging .', source_binary: "osv-scanner_darwin_amd64" }
-          - { os: "darwin", archive_name: "darwin.arm64.security.tar.gz", archive_command: 'tar -czvf "${ARCHIVE_NAME}" -C staging .', source_binary: "osv-scanner_darwin_arm64" }
-          - { os: "win32", archive_name: "win32.x64.security.zip", archive_command: '(cd staging && zip -r ../"${ARCHIVE_NAME}" *)', source_binary: "osv-scanner_windows_amd64.exe" }
-  
+          - { os: "linux", archive_name: "linux.x64.security.tar.gz", archive_command: 'tar -czvf "${ARCHIVE_NAME}" -C staging .', source_binary: "osv-scanner_linux_amd64", output_binary: "osv-scanner" }
+          - { os: "darwin", archive_name: "darwin.x64.security.tar.gz", archive_command: 'tar -czvf "${ARCHIVE_NAME}" -C staging .', source_binary: "osv-scanner_darwin_amd64", output_binary: "osv-scanner" }
+          - { os: "darwin", archive_name: "darwin.arm64.security.tar.gz", archive_command: 'tar -czvf "${ARCHIVE_NAME}" -C staging .', source_binary: "osv-scanner_darwin_arm64", output_binary: "osv-scanner" }
+          - { os: "win32", archive_name: "win32.x64.security.zip", archive_command: '(cd staging && zip -r ../"${ARCHIVE_NAME}" *)', source_binary: "osv-scanner_windows_amd64.exe", output_binary: "osv-scanner.exe" }
+
     steps:
       - name: Download build artifacts
         uses: actions/download-artifact@v4
@@ -117,14 +117,9 @@ jobs:
           ARCHIVE_NAME: ${{ matrix.platform.archive_name }}
           SOURCE_BINARY: ${{ matrix.platform.source_binary }}
           OS_PLATFORM: ${{ matrix.platform.os }}
+          OUTPUT_BINARY: ${{ matrix.platform.output_binary }}
         run: |
           echo "Packaging ${SOURCE_BINARY} and extension contents into ${ARCHIVE_NAME}"
-
-          if [[ "${OS_PLATFORM}" == "win32" ]]; then
-            OUTPUT_BINARY="osv-scanner.exe"
-          else
-            OUTPUT_BINARY="osv-scanner"
-          fi
 
           mkdir staging
           cp "${SOURCE_BINARY}" "staging/${OUTPUT_BINARY}"
