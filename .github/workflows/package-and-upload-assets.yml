@@ -17,6 +17,7 @@ on:
         type: string
 
 jobs:
+  # Build the MCP server and uploads the entire workspace as an artifact for the next job
   build:
     runs-on: ubuntu-latest
     steps:
@@ -51,6 +52,7 @@ jobs:
           name: build-output
           path: .
 
+  # Downloads OSV scanner and packages release archives.
   package:
     needs: build
     runs-on: ubuntu-latest
@@ -70,6 +72,7 @@ jobs:
           name: build-output
           path: .
 
+      # Determine OSV scanner version and record it in `tag`
       - name: Get latest OSV scanner version
         id: osv_scanner_version
         run: |
