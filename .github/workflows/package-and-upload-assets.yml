@@ -136,7 +136,7 @@ jobs:
       - name: Upload archive as workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: release-asset-${{ matrix.platform.archive_name }}
+          name: release-archive-${{ matrix.platform.archive_name }}
           path: ${{ steps.create_archive.outputs.archive_path }}
 
   # This job gathers all archives and uploads them to the GitHub Release.
@@ -154,7 +154,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: release-archives
-          pattern: release-asset-*
+          pattern: release-archive-*
           merge-multiple: true        
 
       - name: List downloaded files
