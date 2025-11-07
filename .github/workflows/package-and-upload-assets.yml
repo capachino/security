@@ -76,7 +76,7 @@ jobs:
       - name: Get latest OSV scanner version
         id: osv_scanner_version
         run: |
-          LATEST_TAG=$(curl -s --fail "https://api.github.com/repos/google/osv-scanner/releases/latest" | jq -r .tag_name)
+          LATEST_TAG=$(curl -sSLf "https://api.github.com/repos/google/osv-scanner/releases/latest" | jq -r .tag_name)
           echo "tag=${LATEST_TAG}" >> $GITHUB_OUTPUT
       
       - name: Download OSV scanner binary
@@ -87,7 +87,7 @@ jobs:
           DOWNLOAD_URL="https://github.com/google/osv-scanner/releases/download/${OSV_SCANNER_VERSION}/${SOURCE_BINARY}"
           
           echo "Downloading binary from: ${DOWNLOAD_URL}"
-          curl -L --fail -o "${SOURCE_BINARY}" "${DOWNLOAD_URL}"
+          curl -Lf -o "${SOURCE_BINARY}" "${DOWNLOAD_URL}"
           chmod +x ${SOURCE_BINARY}
           
           echo "Binary downloaded and prepared."
@@ -104,7 +104,7 @@ jobs:
           PROVENANCE_URL="https://github.com/google/osv-scanner/releases/download/${OSV_SCANNER_VERSION}/multiple.intoto.jsonl"
 
           echo "Downloading provenance from: ${PROVENANCE_URL}"
-          curl -L --fail -o multiple.intoto.jsonl "${PROVENANCE_URL}"
+          curl -Lf -o multiple.intoto.jsonl "${PROVENANCE_URL}"
 
           echo "Verifying binary with slsa-verifier"
           slsa-verifier verify-artifact \
@@ -129,7 +129,7 @@ jobs:
 
           if [[ "${OS_PLATFORM}" == "win32" ]]; then
             echo "Modifying gemini-extension.json for Windows..."
-            jq '(.mcpServers[].command) |= sub("osv-scanner$"; "osv-scanner.exe")' gemini-extension.json > staging/gemini-extension.json
+            jq '.mcpServers.osvScanner.command += ".exe"' gemini-extension.json > staging/gemini-extension.json
             echo "Modification complete."
           fi
 
