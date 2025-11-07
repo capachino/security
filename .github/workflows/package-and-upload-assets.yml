@@ -60,10 +60,10 @@ jobs:
     strategy:
       matrix:
         platform:
-          - { os: "linux", archive_name: "linux.x64.security.tar.gz", archive_command: 'tar -czvf "${ARCHIVE_NAME}" -C staging .', source_binary: "osv-scanner_linux_amd64", output_binary: "osv-scanner" }
-          - { os: "darwin", archive_name: "darwin.x64.security.tar.gz", archive_command: 'tar -czvf "${ARCHIVE_NAME}" -C staging .', source_binary: "osv-scanner_darwin_amd64", output_binary: "osv-scanner" }
-          - { os: "darwin", archive_name: "darwin.arm64.security.tar.gz", archive_command: 'tar -czvf "${ARCHIVE_NAME}" -C staging .', source_binary: "osv-scanner_darwin_arm64", output_binary: "osv-scanner" }
-          - { os: "win32", archive_name: "win32.x64.security.zip", archive_command: '(cd staging && zip -r ../"${ARCHIVE_NAME}" *)', source_binary: "osv-scanner_windows_amd64.exe", output_binary: "osv-scanner.exe" }
+          - { os: "linux", archive_name: "linux.x64.security.tar.gz", source_binary: "osv-scanner_linux_amd64", output_binary: "osv-scanner" }
+          - { os: "darwin", archive_name: "darwin.x64.security.tar.gz", source_binary: "osv-scanner_darwin_amd64", output_binary: "osv-scanner" }
+          - { os: "darwin", archive_name: "darwin.arm64.security.tar.gz", source_binary: "osv-scanner_darwin_arm64", output_binary: "osv-scanner" }
+          - { os: "win32", archive_name: "win32.x64.security.zip", source_binary: "osv-scanner_windows_amd64.exe", output_binary: "osv-scanner.exe" }
 
     steps:
       - name: Download build artifacts
@@ -76,7 +76,7 @@ jobs:
       - name: Get latest OSV scanner version
         id: osv_scanner_version
         run: |
-          LATEST_TAG=$(curl -s "https://api.github.com/repos/google/osv-scanner/releases/latest" | jq -r .tag_name)
+          LATEST_TAG=$(curl -s --fail "https://api.github.com/repos/google/osv-scanner/releases/latest" | jq -r .tag_name)
           echo "tag=${LATEST_TAG}" >> $GITHUB_OUTPUT
       
       - name: Download OSV scanner binary
@@ -116,7 +116,6 @@ jobs:
       - name: Create release archive
         id: create_archive
         env:
-          ARCHIVE_COMMAND: ${{ matrix.platform.archive_command }}
           ARCHIVE_NAME: ${{ matrix.platform.archive_name }}
           SOURCE_BINARY: ${{ matrix.platform.source_binary }}
           OS_PLATFORM: ${{ matrix.platform.os }}
@@ -128,7 +127,7 @@ jobs:
           cp "${SOURCE_BINARY}" "staging/${OUTPUT_BINARY}"
           cp -r ${FILES_TO_PACKAGE} staging/
 
-          if [[ "${{ matrix.platform.os }}" == "win32" ]]; then
+          if [[ "${OS_PLATFORM}" == "win32" ]]; then
             echo "Modifying gemini-extension.json for Windows..."
             jq '(.mcpServers[].command) |= sub("osv-scanner$"; "osv-scanner.exe")' gemini-extension.json > staging/gemini-extension.json
             echo "Modification complete."
@@ -138,7 +137,11 @@ jobs:
           ls -l staging
 
           # Create archive
-          eval "${ARCHIVE_COMMAND}"
+          if [[ "${OS_PLATFORM}" == "win32" ]]; then
+            (cd staging && zip -r ../"${ARCHIVE_NAME}" *)
+          else
+            tar -czvf "${ARCHIVE_NAME}" -C staging .
+          fi
           echo "Created archive: ${ARCHIVE_NAME}"
           echo "archive_path=${ARCHIVE_NAME}" >> $GITHUB_OUTPUT
 
