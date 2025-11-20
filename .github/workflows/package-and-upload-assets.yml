@@ -6,7 +6,7 @@ env:
 
 on:
   release:
-    types: [prereleased]
+    types: [created]
 
   # This allows you to run the workflow manually from the Actions tab
   workflow_dispatch:
@@ -178,7 +178,8 @@ jobs:
       - name: Upload all assets to GitHub Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ github.event.release.tag_name || inputs.tag_name }}
         run: |
           gh release upload \
-            ${{ github.event.release.tag_name || inputs.tag_name }} \
+            ${TAG_NAME} \
             release-archives/*
